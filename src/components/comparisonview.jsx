@@ -83,22 +83,6 @@ export class ComparisonView extends Component {
         </Row>
         <Row>
           <Col>
-            <MetricsGraphics
-              title={metricName}
-              data={data}
-              chart_type="line"
-              x_label={metricName}
-              y_label="Proportion of Users"
-              y_accessor="proportion"
-              x_accessor="start"
-              area={[true, true]}
-              x_scale_type= "log"
-              width= {this.state.plotWidth}
-            />
-          </Col>
-        </Row>
-        <Row>
-          <Col>
             <Plot
               data={[
                 {
