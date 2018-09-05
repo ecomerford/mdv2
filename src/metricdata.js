@@ -1,11 +1,26 @@
+<<<<<<< HEAD
+import fetch from "isomorphic-fetch";
+=======
+<<<<<<< HEAD
 
 import fetch from "isomorphic-fetch";
 
+=======
+>>>>>>> Updates to datastore.
+>>>>>>> Rebase to moz/master.
 import GC_MS_nightly_62 from "./data/GC_MS_nightly_62.json";
 
 export class MetricData {
   constructor(props) {
+<<<<<<< HEAD
+    this.state = {
+=======
+<<<<<<< HEAD
     this._active = {
+=======
+    this.probe = {
+>>>>>>> Updates to datastore.
+>>>>>>> Rebase to moz/master.
       metric: "GC_MS",
       channel: "nightly",
       version: "62",
@@ -21,6 +36,8 @@ export class MetricData {
     };
   }
 
+<<<<<<< HEAD
+=======
   get active() {
     return {
       metric: this._active.metric,
@@ -34,7 +51,8 @@ export class MetricData {
     return [
       "GC_MS",
       "HTTP_SCHEME_UPGRADE_TYPE",
-      "scalars_devtools_onboarding_is_devtools_user"
+      "scalars_devtools_onboarding_is_devtools_user",
+      "scalars_telemetry_os_shutting_down",
     ];
   }
 
@@ -51,6 +69,7 @@ export class MetricData {
     return ["60", "61", "62"];
   }
 
+>>>>>>> Add some more boolean sample data to evaluate designs
   get mean() {
     return this.getMean();
   }
@@ -74,38 +93,12 @@ export class MetricData {
     this.cached.change = this.getChange().toFixed(2);
   }
 
-  async loadDataFor(metric, channel, version) {
-    try {
-      const response = await fetch(`data/${metric}_${channel}_${version}.json`);
-      const data = await response.json();
-
-      this._active = {
-        ...this._active,
-        metric,
-        channel,
-        version,
-        data,
-      };
-    } catch (e) {
-      console.warn(`Failed to load data for ${metric} ${channel} ${version}`, e);
-      this._active = {
-        ...this._active,
-        metric,
-        channel,
-        version,
-        data: [],
-      };
-    }
-
-    this.updateCachedData();
-  }
-
   getMean() {
-    if (this._active.data.length < 1) {
+    if (this.probe.data.length < 1) {
       return NaN;
     }
 
-    let currentData = this._active.data;
+    let currentData = this.probe.data;
     let buckets = [
       ...currentData.map(item => item.start),
       this.getLastBucketUpper(),
@@ -127,14 +120,14 @@ export class MetricData {
   }
 
   getLastBucketUpper() {
-    let currentData = this._active.data;
+    let currentData = this.probe.data;
     let buckets = currentData.map(item => item.start);
     if (currentData.length === 1) {
       return buckets[0] + 1;
     }
 
-    /*if (this.state.activeMetric.type === "linear" || this.state.activeMetric.type === "flag" || this.state.activeMetric.type ===
-    "boolean" || this.state.activeMetric.type === "enumerated") {
+    /*if (this.probe.activeMetric.type === "linear" || this.probe.activeMetric.type === "flag" || this.probe.activeMetric.type ===
+    "boolean" || this.probe.activeMetric.type === "enumerated") {
       return buckets[buckets.length - 1] + buckets[buckets.length - 1]
       - buckets[buckets.length -2];
     }*/
@@ -143,11 +136,11 @@ export class MetricData {
   };
 
   getPercentile(percentile) {
-    if (this._active.data.length < 1) {
+    if (this.probe.data.length < 1) {
       return NaN;
     }
 
-    let currentData = this._active.data;
+    let currentData = this.probe.data;
     let buckets = [
       ...currentData.map(item => item.start),
       this.getLastBucketUpper(),
@@ -172,7 +165,7 @@ export class MetricData {
   }
 
   getChange() {
-    if (this._active.data.length < 1) {
+    if (this.probe.data.length < 1) {
       return NaN;
     }
 

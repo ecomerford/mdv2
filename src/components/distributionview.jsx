@@ -20,6 +20,35 @@ export class DistributionView extends Component {
       // values with more than four digits, show three sig figs and a suffix.
       return count < 1000 ? count : format(".3s")(count);
     };
+
+    this.makePlotly = (data) => {
+      let plotlyData = {
+        type: "bar",
+        x: [],
+        y: [],
+        text: [],
+        customdata: [],
+        hoverinfo: "y+text",
+      };
+
+      for (let {start, label, proportion, count, end} of data) {
+        let x;
+        let text;
+        if (label) {
+          x = label;
+          text = `${label} - ${this.formatCount(count)} clients`;
+        } else {
+          x = start;
+          text = `[${start}, ${end-1}) - ${this.formatCount(count)} clients`;
+        }
+        plotlyData.x.push(x);
+        plotlyData.text.push(text);
+        plotlyData.y.push(proportion);
+        plotlyData.customdata.push(count);
+      }
+
+      return plotlyData;
+    };
   }
 
   handleChange = (event) => {
@@ -35,35 +64,46 @@ export class DistributionView extends Component {
     window.removeEventListener("resize", this.onResize);
   }
 
+  makeBooleanData(metric, [never, always]) {
+    const totalCount = Math.ceil(never.count / never.proportion);
+    const sometimes = {
+      start: 2,
+      end: null,
+      label: "sometimes",
+      count: totalCount - never.count - always.count,
+      proportion: 1 - never.proportion - always.proportion,
+    };
+
+    const threeTraces = [always, sometimes, never].map(datum => {
+      let plotDatum = this.makePlotly([datum]);
+      plotDatum.name = datum.label;
+      plotDatum.x[0] = "";
+      return plotDatum;
+    });
+
+    return threeTraces;
+  }
+
   render() {
-    let mean = this.props.dataStore.mean.toFixed(2);
     let metric = this.props.dataStore.active.metric;
     let data = this.props.dataStore.active.data;
 
-    let plotlyData = {
-      name: metric,
-      type: "bar",
-      x: [],
-      y: [],
-      text: [],
-      customdata: [],
-      hoverinfo: "y+text",
-    };
+    const BOOL_MEASURES = [
+      "scalars_devtools_onboarding_is_devtools_user",
+      "scalars_telemetry_os_shutting_down",
+    ];
 
-    for (let {start, label, proportion, count, end} of data) {
-      let x;
-      let text;
-      if (label) {
-        x = label;
-        text = `${label} - ${this.formatCount(count)} clients`;
-      } else {
-        x = start;
-        text = `[${start}, ${end-1}) - ${this.formatCount(count)} clients`;
-      }
-      plotlyData.x.push(x);
-      plotlyData.text.push(text);
-      plotlyData.y.push(proportion);
-      plotlyData.customdata.push(count);
+    let plotData;
+    let extraMessage;
+    if (BOOL_MEASURES.includes(metric)) {
+      plotData = this.makeBooleanData(metric, data);
+      const trueCount = Math.ceil(data[0].count / data[0].proportion) - data[0].count;
+      const trueProportion = ((1 - data[0].proportion) * 100).toFixed(2);
+      extraMessage = (
+        <p>{trueCount} users ({trueProportion}% of respondents) reported true at least once.</p>
+      );
+    } else {
+      plotData = [this.makePlotly(data)];
     }
 
     return (
@@ -90,7 +130,7 @@ export class DistributionView extends Component {
         <Row>
           {this.state.mode === "graph" &&
             <Plot
-              data={[plotlyData]}
+              data={plotData}
               layout={ {
                 type: "bar",
                 title: metric,
@@ -101,7 +141,7 @@ export class DistributionView extends Component {
                 },
                 yaxis: {
                   title: "Proportion of Users",
-                  hoverformat: ".3p",
+                  hoverformat: ".4p",
                   tickformat: ".3p",
                 },
               } }
@@ -115,7 +155,7 @@ export class DistributionView extends Component {
           }
         </Row>
         <Row>
-          <p>Mean: {mean}</p>
+          {extraMessage}
         </Row>
       </Grid>
     );
